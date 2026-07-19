@@ -1,0 +1,9 @@
+# Ignore the Python virtual environment
+.venv/
+venv/
+__pycache__/
+
+
+# SECURE YOUR SECRETS: Ignore environment variables
+.env
+.env.local
