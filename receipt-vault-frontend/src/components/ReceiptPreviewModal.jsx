@@ -1,22 +1,32 @@
-import React from 'react';
-import { X, Download, Edit } from 'lucide-react';
+import { useEffect } from "react";
+import { X } from "lucide-react";
+import { formatFileSize, formatUploadDate, getStatusColor } from "../utils/receiptFormatters";
 
 const ReceiptPreviewModal = ({ receipt, onClose }) => {
+  useEffect(() => {
+    const closeOnEscape = (event) => {
+      if (receipt && event.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    return () => document.removeEventListener("keydown", closeOnEscape);
+  }, [onClose, receipt]);
+
   if (!receipt) return null;
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Uploaded': return 'bg-primary/10 text-primary';
-      case 'Processing': return 'bg-tertiary/10 text-tertiary';
-      case 'Completed': return 'bg-green-500/10 text-green-700';
-      case 'Failed': return 'bg-error/10 text-error';
-      default: return 'bg-primary/10 text-primary';
-    }
-  };
+  const metadata = [
+    ["Receipt Name", receipt.receiptName],
+    ["Upload Date", formatUploadDate(receipt.createdAt)],
+    ["Status", receipt.status],
+    ["Checksum", receipt.checksum || "Not available"],
+    ["Width", Number.isFinite(receipt.width) ? `${receipt.width} px` : "Not available"],
+    ["Height", Number.isFinite(receipt.height) ? `${receipt.height} px` : "Not available"],
+    ["File Size", formatFileSize(receipt.fileSize)],
+  ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-container-padding bg-black/40 backdrop-blur-sm fade-in">
-      <div className="bg-white w-full max-w-4xl max-h-[921px] rounded shadow-2xl overflow-hidden flex flex-col md:flex-row modal-shadow">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-container-padding bg-black/40 backdrop-blur-sm fade-in" onClick={onClose} role="presentation">
+      <div className="bg-white w-full max-w-5xl max-h-[90vh] rounded shadow-2xl overflow-hidden flex flex-col md:flex-row modal-shadow" role="dialog" aria-modal="true" aria-label={`Receipt details for ${receipt.receiptName}`} onClick={(event) => event.stopPropagation()}>
         {/* Close Button (Mobile) */}
         <button 
           className="absolute top-4 right-4 md:hidden text-white bg-black/50 p-2 rounded-full" 
@@ -26,23 +36,23 @@ const ReceiptPreviewModal = ({ receipt, onClose }) => {
         </button>
 
         {/* Large Receipt Image */}
-        <div className="w-full md:w-1/2 bg-surface-container-highest flex items-center justify-center p-gutter">
-          <div className="relative w-full aspect-[3/4] max-h-[716px] shadow-lg border border-outline-variant bg-white">
+        <div className="w-full md:w-3/5 min-h-[18rem] bg-surface-container-highest overflow-auto p-gutter">
+          <div className="min-h-full flex items-center justify-center">
             <img 
-              src={receipt.thumbnail} 
-              alt={receipt.name} 
-              className="w-full h-full object-contain p-4" 
+              src={receipt.originalUrl} 
+              alt={receipt.receiptName} 
+              className="max-w-full h-auto max-h-[70vh] object-contain shadow-lg border border-outline-variant bg-white" 
             />
           </div>
         </div>
 
         {/* Details Section */}
-        <div className="w-full md:w-1/2 p-section-margin flex flex-col justify-between">
+        <div className="w-full md:w-2/5 p-section-margin overflow-y-auto">
           <div>
             <div className="flex justify-between items-start mb-gutter">
               <div>
-                <h3 className="font-headline-md text-headline-md text-on-surface">{receipt.name}</h3>
-                <p className="text-label-md font-label-md text-on-surface-variant">Uploaded on {receipt.date}</p>
+                <h3 className="font-headline-md text-headline-md text-on-surface break-words">{receipt.receiptName}</h3>
+                <p className="text-label-md font-label-md text-on-surface-variant">Uploaded on {formatUploadDate(receipt.createdAt)}</p>
               </div>
               <button 
                 className="hidden md:block text-outline hover:text-on-surface transition-colors" 
@@ -52,44 +62,18 @@ const ReceiptPreviewModal = ({ receipt, onClose }) => {
               </button>
             </div>
 
-            <div className="space-y-4 mb-section-margin">
-              <div className="p-4 bg-surface-container-low rounded border border-outline-variant">
-                <span className="text-label-sm font-label-sm text-on-surface-variant block mb-1">Status</span>
-                <span className={`px-2 py-1 font-label-sm text-label-sm rounded uppercase tracking-wide inline-block ${getStatusColor(receipt.status)}`}>
-                  {receipt.status}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-gutter">
-                <div>
-                  <span className="text-label-sm font-label-sm text-on-surface-variant block">Category</span>
-                  <span className="font-body-md text-body-md text-on-surface">Meals & Entertainment</span>
+            <div className="space-y-3">
+              {metadata.map(([label, value]) => (
+                <div key={label} className="grid grid-cols-[minmax(6rem,auto)_1fr] gap-3 border-b border-outline-variant pb-3 last:border-0">
+                  <span className="text-label-sm font-label-sm text-on-surface-variant">{label}</span>
+                  {label === "Status" ? (
+                    <span className={`w-fit px-2 py-1 font-label-sm text-label-sm rounded uppercase tracking-wide ${getStatusColor(value)}`}>{value}</span>
+                  ) : (
+                    <span className="font-body-md text-body-md text-on-surface break-all">{value}</span>
+                  )}
                 </div>
-                <div>
-                  <span className="text-label-sm font-label-sm text-on-surface-variant block">Total Amount</span>
-                  <span className="font-body-md text-body-md text-on-surface">$24.50</span>
-                </div>
-                <div>
-                  <span className="text-label-sm font-label-sm text-on-surface-variant block">Tax Paid</span>
-                  <span className="font-body-md text-body-md text-on-surface">$1.96</span>
-                </div>
-                <div>
-                  <span className="text-label-sm font-label-sm text-on-surface-variant block">Payment Method</span>
-                  <span className="font-body-md text-body-md text-on-surface">Visa ending in 4242</span>
-                </div>
-              </div>
+              ))}
             </div>
-          </div>
-
-          <div className="flex gap-gutter">
-            <button className="flex-1 bg-primary text-white py-2 font-label-md text-label-md rounded hover:bg-primary/90 transition-colors flex items-center justify-center gap-unit">
-              <Download size={16} />
-              Download PDF
-            </button>
-            <button className="flex-1 border border-outline-variant text-on-surface py-2 font-label-md text-label-md rounded hover:bg-surface-container-high transition-colors flex items-center justify-center gap-unit">
-              <Edit size={16} />
-              Edit Details
-            </button>
           </div>
         </div>
       </div>
