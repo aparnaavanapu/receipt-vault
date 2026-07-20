@@ -27,3 +27,16 @@ export const getReceipts = async (accessToken) => {
 
   return receipts;
 };
+
+export const deleteReceipt = async ({ receiptId, accessToken }) => {
+  const response = await fetch(`${apiBaseUrl}/receipts/${encodeURIComponent(receiptId)}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
+
+  if (response.status !== 204) {
+    throw new Error(await getErrorMessage(response));
+  }
+};
