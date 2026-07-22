@@ -13,11 +13,14 @@ const ReceiptsList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [dateValidationError, setDateValidationError] = useState("");
   const [receiptToDelete, setReceiptToDelete] = useState(null);
   const [deletingReceiptId, setDeletingReceiptId] = useState(null);
   const fetchedAccessTokenRef = useRef(null);
 
-  const fetchReceipts = useCallback(async ({ showLoading = true } = {}) => {
+  const fetchReceipts = useCallback(async ({ showLoading = true, fromDate: filterFromDate, toDate: filterToDate } = {}) => {
     const accessToken = auth.user?.access_token;
     if (!accessToken) {
       setError("Your session has expired. Please sign in again.");
@@ -29,7 +32,7 @@ const ReceiptsList = () => {
     setError("");
 
     try {
-      setReceipts(await getReceipts(accessToken));
+      setReceipts(await getReceipts(accessToken, filterFromDate, filterToDate));
     } catch (requestError) {
       console.error("Unable to load receipts:", requestError);
       setError(requestError.message || "Unable to load receipts. Please try again.");
@@ -48,6 +51,23 @@ const ReceiptsList = () => {
 
   const handleDelete = (receipt) => {
     if (!deletingReceiptId) setReceiptToDelete(receipt);
+  };
+
+  const handleDateFilter = () => {
+    if (fromDate && toDate && fromDate > toDate) {
+      setDateValidationError("From Date cannot be after To Date.");
+      return;
+    }
+
+    setDateValidationError("");
+    void fetchReceipts({ fromDate, toDate });
+  };
+
+  const handleClearDateFilter = () => {
+    setFromDate("");
+    setToDate("");
+    setDateValidationError("");
+    void fetchReceipts();
   };
 
   const handleConfirmDelete = async () => {
@@ -69,7 +89,7 @@ const ReceiptsList = () => {
       setReceipts((currentReceipts) => currentReceipts.filter((receipt) => receipt.receiptId !== receiptId));
       setSelectedReceipt((currentReceipt) => currentReceipt?.receiptId === receiptId ? null : currentReceipt);
       setReceiptToDelete(null);
-      await fetchReceipts({ showLoading: false });
+      await fetchReceipts({ showLoading: false, fromDate, toDate });
     } catch (deleteError) {
       console.error("Unable to delete receipt:", deleteError);
       setError("Failed to delete receipt. Please try again.");
@@ -99,6 +119,38 @@ const ReceiptsList = () => {
           />
         </div>
       </div>
+
+      <section className="mb-gutter" aria-label="Filter receipts by date">
+        <div className="flex flex-col md:flex-row md:items-end gap-gutter">
+          <label className="flex flex-col gap-1 w-full md:w-auto">
+            <span className="font-label-md text-label-md text-on-surface-variant">From Date</span>
+            <input
+              type="date"
+              value={fromDate}
+              onChange={(event) => setFromDate(event.target.value)}
+              className="w-full md:w-44 px-3 py-2 border border-outline-variant rounded bg-white text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </label>
+          <label className="flex flex-col gap-1 w-full md:w-auto">
+            <span className="font-label-md text-label-md text-on-surface-variant">To Date</span>
+            <input
+              type="date"
+              value={toDate}
+              onChange={(event) => setToDate(event.target.value)}
+              className="w-full md:w-44 px-3 py-2 border border-outline-variant rounded bg-white text-body-md font-body-md focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </label>
+          <div className="flex flex-col sm:flex-row gap-gutter w-full md:w-auto">
+            <button type="button" onClick={handleDateFilter} disabled={isLoading} className="px-5 py-2 bg-primary text-white font-label-md text-label-md rounded hover:bg-primary/90 transition-colors disabled:cursor-not-allowed disabled:opacity-60">
+              Filter
+            </button>
+            <button type="button" onClick={handleClearDateFilter} disabled={isLoading} className="px-5 py-2 border border-outline-variant text-on-surface font-label-md text-label-md rounded hover:bg-surface-container-high transition-colors disabled:cursor-not-allowed disabled:opacity-60">
+              Clear
+            </button>
+          </div>
+        </div>
+        {dateValidationError && <p className="mt-2 font-body-md text-body-md text-error" role="alert">{dateValidationError}</p>}
+      </section>
 
       {error && receipts.length > 0 && !isLoading && (
         <div className="mb-gutter rounded border border-error/30 bg-error/10 px-gutter py-3 font-body-md text-body-md text-error" role="alert">

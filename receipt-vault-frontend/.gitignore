@@ -32,3 +32,6 @@ __pycache__/
 # SECURE YOUR SECRETS: Ignore environment variables
 .env
 .env.local
+
+
+favicon.svg

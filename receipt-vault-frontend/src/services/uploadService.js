@@ -31,11 +31,13 @@ export const createUploadUrl = async ({ fileName, contentType, accessToken }) =>
   return uploadDetails;
 };
 
-export const uploadFileToS3 = async ({ uploadUrl, file }) => {
+export const uploadFileToS3 = async ({ uploadUrl, file, userId, receiptId }) => {
   const response = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
-      "Content-Type": file.type,
+        "Content-Type": file.type,
+        "x-amz-meta-userid": userId.sub,
+        "x-amz-meta-receiptid": receiptId,
     },
     body: file,
   });

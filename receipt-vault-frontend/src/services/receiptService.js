@@ -9,8 +9,26 @@ const getErrorMessage = async (response) => {
   }
 };
 
-export const getReceipts = async (accessToken) => {
-  const response = await fetch(`${apiBaseUrl}/receipts`, {
+export const getReceipts = async (
+  accessToken,
+  fromDate,
+  toDate
+) => {
+  const params = new URLSearchParams();
+
+  if (fromDate) {
+    params.append("from", fromDate);
+  }
+
+  if (toDate) {
+    params.append("to", toDate);
+  }
+
+  const url = params.toString()
+    ? `${apiBaseUrl}/receipts?${params.toString()}`
+    : `${apiBaseUrl}/receipts`;
+
+  const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${accessToken}`,
     },
@@ -20,14 +38,8 @@ export const getReceipts = async (accessToken) => {
     throw new Error(await getErrorMessage(response));
   }
 
-  const receipts = await response.json();
-  if (!Array.isArray(receipts)) {
-    throw new Error("The receipts response is invalid.");
-  }
-
-  return receipts;
+  return await response.json();
 };
-
 export const deleteReceipt = async ({ receiptId, accessToken }) => {
   const response = await fetch(`${apiBaseUrl}/receipts/${encodeURIComponent(receiptId)}`, {
     method: "DELETE",
