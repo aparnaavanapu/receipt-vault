@@ -60,14 +60,14 @@ const UploadReceipt = () => {
   const uploadReceipt = async (fileItem, index, accessToken) => {
     try {
       updateFile(index, { status: 'Generating upload URL...' });
-      const { uploadUrl, objectKey } = await createUploadUrl({
+      const { uploadUrl, objectKey, receiptId } = await createUploadUrl({
         fileName: fileItem.file.name,
         contentType: fileItem.file.type,
         accessToken,
       });
 
       updateFile(index, { status: 'Uploading...', objectKey });
-      await uploadFileToS3({ uploadUrl, file: fileItem.file });
+      await uploadFileToS3({ uploadUrl, file: fileItem.file, userId: auth.user?.profile?.sub, receiptId, });
       updateFile(index, { status: 'Uploaded', objectKey });
       return true;
     } catch (error) {
@@ -79,6 +79,7 @@ const UploadReceipt = () => {
 
   const handleConfirmUpload = async () => {
     const accessToken = auth.user?.access_token;
+    
     if (!accessToken) {
       setFiles(currentFiles => currentFiles.map(file => ({
         ...file,
