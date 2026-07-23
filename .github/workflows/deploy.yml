@@ -27,6 +27,10 @@ jobs:
         working-directory: receipt-vault-frontend
         run: npm ci
 
+      - name: Run ESLint
+        working-directory: receipt-vault-frontend
+        run: npm run lint
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
