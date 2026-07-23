@@ -65,6 +65,36 @@ jobs:
       - name: Verify Identity
         run: aws sts get-caller-identity
 
+      - name: Package Upload Lambda
+        run: |
+            mkdir -p artifacts/upload-lambda
+            pip install -r receipt-vault-backend/upload-lambda/requirements.txt \
+            -t artifacts/upload-lambda
+
+            cp receipt-vault-backend/upload-lambda/*.py artifacts/upload-lambda/
+
+            cd artifacts/upload-lambda
+            zip -r ../../upload-lambda.zip .
+      - name: Package Processor Lambda
+        run: |
+            mkdir -p artifacts/processor-lambda
+            pip install -r receipt-vault-backend/processor-lambda/requirements.txt \
+            -t artifacts/processor-lambda
+
+            cp receipt-vault-backend/processor-lambda/*.py artifacts/processor-lambda/
+
+            cd artifacts/processor-lambda
+            zip -r ../../processor-lambda.zip .
+      - name: Package Receipts API Lambda
+        run: |
+            mkdir -p artifacts/receipts-apis
+            pip install -r receipt-vault-backend/receipts-apis/requirements.txt \
+            -t artifacts/receipts-apis
+
+            cp receipt-vault-backend/receipts-apis/*.py artifacts/receipts-apis/
+
+            cd artifacts/receipts-apis
+            zip -r ../../receipts-apis.zip .
       
 
 
