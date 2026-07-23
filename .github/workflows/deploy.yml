@@ -1,6 +1,5 @@
 name: Receipt Vault CI/CD
 
-
 on:
   push:
     branches:
