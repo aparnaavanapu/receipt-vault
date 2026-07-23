@@ -10,19 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  checkout:
+  debug:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::887395463967:role/ReceiptVaultGitHubDeployRole
-          aws-region: ap-south-2
-          role-session-name: GitHubActions
-
-      - name: Verify AWS Identity
-        run: aws sts get-caller-identity
+      - name: Dump GitHub Context
+        env:
+          GITHUB_CONTEXT: ${{ toJson(github) }}
+        run: echo "$GITHUB_CONTEXT"
