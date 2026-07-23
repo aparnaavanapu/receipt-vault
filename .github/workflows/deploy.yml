@@ -31,6 +31,10 @@ jobs:
         working-directory: receipt-vault-frontend
         run: npm run lint
 
+      - name: Build React App
+        working-directory: receipt-vault-frontend
+        run: npm run build
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
