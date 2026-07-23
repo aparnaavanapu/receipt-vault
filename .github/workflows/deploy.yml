@@ -14,16 +14,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
           role-to-assume: arn:aws:iam::887395463967:role/ReceiptVaultGitHubDeployRole
-          role-session-name: GitHubActions
           aws-region: ap-south-2
-          mask-aws-account-id: false
+          role-session-name: GitHubActions
 
       - name: Verify Identity
         run: aws sts get-caller-identity
