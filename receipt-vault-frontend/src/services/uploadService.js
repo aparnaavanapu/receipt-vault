@@ -31,20 +31,17 @@ export const createUploadUrl = async ({ fileName, contentType, accessToken }) =>
   return uploadDetails;
 };
 
-export const uploadFileToS3 = async ({ uploadUrl, file, userId, receiptId }) => {
+export const uploadFileToS3 = async ({ uploadUrl, file}) => {
   const response = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
         "Content-Type": file.type,
-        "x-amz-meta-userid": userId,
-        "x-amz-meta-receiptid": receiptId,
+        
     },
     body: file,
   });
 
   if (!response.ok) {
-    const errorText = await response.text();
-    console.error("S3 Upload Error:", response.status, errorText);
-    throw new Error(errorText);
+    throw new Error("Unable to upload the file to S3.");
   }
 };
