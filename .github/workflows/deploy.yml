@@ -1,4 +1,4 @@
-name: Receipt Vault CI/CD
+name: Debug OIDC
 
 on:
   push:
@@ -16,7 +16,5 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Dump GitHub Context
-        env:
-          GITHUB_CONTEXT: ${{ toJson(github) }}
-        run: echo "$GITHUB_CONTEXT"
+      - name: Print OIDC Claims
+        uses: github/actions-oidc-debugger@v1
