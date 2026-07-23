@@ -22,6 +22,7 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::887395463967:role/ReceiptVaultGitHubDeployRole
           aws-region: ap-south-2
+          role-session-name: GitHubActions
 
       - name: Verify AWS Identity
         run: aws sts get-caller-identity
