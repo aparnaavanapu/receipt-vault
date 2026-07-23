@@ -27,6 +27,28 @@ jobs:
         working-directory: receipt-vault-frontend
         run: npm ci
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v5
+        with:
+          role-to-assume: arn:aws:iam::887395463967:role/ReceiptVaultGitHubDeployRole
+          aws-region: ap-south-2
+          role-session-name: GitHubActions
+
+      - name: Load deployment configuration from SSM
+        run: |
+          echo "FRONTEND_BUCKET=$(aws ssm get-parameter --name /receipt-vault/frontend-bucket --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter --name /receipt-vault/cloudfront-distribution-id --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "VITE_API_BASE_URL=$(aws ssm get-parameter --name /receipt-vault/api-base-url --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "VITE_COGNITO_AUTHORITY=$(aws ssm get-parameter --name /receipt-vault/cognito-authority --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "VITE_COGNITO_CLIENT_ID=$(aws ssm get-parameter --name /receipt-vault/cognito-client-id --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "VITE_COGNITO_DOMAIN=$(aws ssm get-parameter --name /receipt-vault/cognito-domain --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+
       - name: Run ESLint
         working-directory: receipt-vault-frontend
         run: npm run lint
@@ -41,25 +63,7 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v5
-        with:
-          role-to-assume: arn:aws:iam::887395463967:role/ReceiptVaultGitHubDeployRole
-          aws-region: ap-south-2
-          role-session-name: GitHubActions
-
-      - name: Load deployment configuration from SSM
-        run: |
-            echo "FRONTEND_BUCKET=$(aws ssm get-parameter \
-            --name /receipt-vault/frontend-bucket \
-            --query 'Parameter.Value' \
-            --output text)" >> $GITHUB_ENV
-
-            echo "CLOUDFRONT_DISTRIBUTION_ID=$(aws ssm get-parameter \
-            --name /receipt-vault/cloudfront-distribution-id \
-            --query 'Parameter.Value' \
-            --output text)" >> $GITHUB_ENV
-
+      
       - name: Upgrade pip
         run: python -m pip install --upgrade pip
 
