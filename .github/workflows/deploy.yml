@@ -17,8 +17,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Verify Repository
-        run: |
-          echo "Repository downloaded successfully."
-          pwd
-          ls -R
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::887395463967:role/ReceiptVaultGitHubDeployRole
+          aws-region: ap-south-2
+
+      - name: Verify AWS Identity
+        run: aws sts get-caller-identity
