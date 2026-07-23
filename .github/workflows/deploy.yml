@@ -16,6 +16,37 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: receipt-vault-frontend/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: receipt-vault-frontend
+        run: npm ci
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install Upload Lambda Dependencies
+        working-directory: receipt-vault-backend/upload-lambda
+        run: pip install -r requirements.txt -t package
+
+      - name: Install Processor Lambda Dependencies
+        working-directory: receipt-vault-backend/processor-lambda
+        run: pip install -r requirements.txt -t package
+
+      - name: Install Receipts API Dependencies
+        working-directory: receipt-vault-backend/receipts-apis
+        run: pip install -r requirements.txt -t package
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
         with:
@@ -25,3 +56,7 @@ jobs:
 
       - name: Verify Identity
         run: aws sts get-caller-identity
+
+      
+
+
