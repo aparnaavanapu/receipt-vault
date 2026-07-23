@@ -1,9 +1,18 @@
-# Ignore the Python virtual environment
-.venv/
-venv/
+# Python
 __pycache__/
+*.py[cod]
+venv/
+.venv/
 
+# Deployment packages
+*.zip
 
-# SECURE YOUR SECRETS: Ignore environment variables
-.env
-.env.local
+# Node
+node_modules/
+dist/
+
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
