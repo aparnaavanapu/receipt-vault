@@ -19,8 +19,9 @@ dynamodb = boto3.resource("dynamodb")
 # Environment Variables
 # ==========================
 
-BUCKET_NAME = os.environ["BUCKET_NAME"]
+
 TABLE_NAME = os.environ["TABLE_NAME"]
+THUMBNAIL_BUCKET = os.environ["THUMBNAIL_BUCKET"]
 
 table = dynamodb.Table(TABLE_NAME)
 
@@ -75,7 +76,7 @@ def create_thumbnail(image_bytes):
     )
 
 
-def upload_thumbnail(bucket, key, image_bytes, image_format):
+def upload_thumbnail(key, image_bytes, image_format):
     """
     Upload thumbnail into S3.
     """
@@ -83,7 +84,7 @@ def upload_thumbnail(bucket, key, image_bytes, image_format):
     content_type = f"image/{image_format.lower()}"
 
     s3.put_object(
-        Bucket=bucket,
+        Bucket=THUMBNAIL_BUCKET,
         Key=key,
         Body=image_bytes,
         ContentType=content_type,
@@ -97,22 +98,51 @@ def update_status(
     metadata=None
 ):
     """
-    Write/Update DynamoDB.
+    Update an existing receipt record in DynamoDB.
     """
 
-    item = {
-        "userId": user_id,
-        "receiptId": receipt_id,
-        "status": status,
-        "updatedAt": datetime.now(
+    update_expression = (
+        "SET #status = :status, "
+        "updatedAt = :updatedAt"
+    )
+
+    expression_attribute_names = {
+        "#status": "status"
+    }
+
+    expression_attribute_values = {
+        ":status": status,
+        ":updatedAt": datetime.now(
             timezone.utc
         ).isoformat()
     }
 
     if metadata:
-        item.update(metadata)
+        for key, value in metadata.items():
+            attribute_name = f"#{key}"
+            attribute_value = f":{key}"
+            update_expression += (
+            f", {attribute_name} = {attribute_value}"
+            )
 
-    table.put_item(Item=item)
+            expression_attribute_names[
+                attribute_name
+            ] = key
+
+            expression_attribute_values[
+                attribute_value
+            ] = value
+
+    table.update_item(
+        Key={
+            "userId": user_id,
+            "receiptId": receipt_id
+        },
+        UpdateExpression=update_expression,
+        ExpressionAttributeNames=expression_attribute_names,
+        ExpressionAttributeValues=expression_attribute_values
+    )
+
 
 
 # ==========================
@@ -175,6 +205,8 @@ def lambda_handler(event, context):
                 Key=object_key
             )
 
+            raise Exception("Testing DLQ")
+
             image_bytes = response["Body"].read()
 
             file_size = len(image_bytes)
@@ -201,7 +233,6 @@ def lambda_handler(event, context):
             # ---------------------------------------
 
             upload_thumbnail(
-                bucket=bucket,
                 key=thumbnail_key,
                 image_bytes=thumbnail_bytes,
                 image_format=image_format
@@ -213,24 +244,22 @@ def lambda_handler(event, context):
 
             metadata = {
 
-                "originalKey": object_key,
+            "bucket": bucket,
 
-                "thumbnailKey": thumbnail_key,
+            "originalKey": object_key,
 
-                "bucket": bucket,
+            "thumbnailBucket": THUMBNAIL_BUCKET,
 
-                "fileSize": file_size,
+            "thumbnailKey": thumbnail_key,
 
-                "width": width,
+            "fileSize": file_size,
 
-                "height": height,
+            "width": width,
 
-                "checksum": checksum,
+            "height": height,
 
-                "createdAt":
-                    datetime.now(
-                        timezone.utc
-                    ).isoformat()
+            "checksum": checksum,
+
             }
 
             update_status(

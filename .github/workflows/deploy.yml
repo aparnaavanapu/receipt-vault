@@ -48,6 +48,12 @@ jobs:
 
           echo "VITE_COGNITO_DOMAIN=$(aws ssm get-parameter --name /receipt-vault/cognito-domain --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
 
+          echo "UPLOAD_LAMBDA=$(aws ssm get-parameter --name /receipt-vault/upload-lambda --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "PROCESSOR_LAMBDA=$(aws ssm get-parameter --name /receipt-vault/processor-lambda --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
+          echo "RECEIPTS_API_LAMBDA=$(aws ssm get-parameter --name /receipt-vault/receipts-api-lambda --query 'Parameter.Value' --output text)" >> $GITHUB_ENV
+
 
       - name: Run ESLint
         working-directory: receipt-vault-frontend
@@ -113,6 +119,42 @@ jobs:
             processor-lambda.zip
             receipts-apis.zip
 
+
+      - name: Deploy Upload Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.UPLOAD_LAMBDA }} \
+            --zip-file fileb://upload-lambda.zip
+
+          aws lambda wait function-updated \
+            --function-name ${{ env.UPLOAD_LAMBDA }}
+
+
+      - name: Deploy Processor Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.PROCESSOR_LAMBDA }} \
+            --zip-file fileb://processor-lambda.zip
+
+          aws lambda wait function-updated \
+            --function-name ${{ env.PROCESSOR_LAMBDA }}
+
+
+
+      - name: Deploy Receipts API Lambda
+        run: |
+          aws lambda update-function-code \
+            --function-name ${{ env.RECEIPTS_API_LAMBDA }} \
+            --zip-file fileb://receipts-apis.zip
+
+          aws lambda wait function-updated \
+            --function-name ${{ env.RECEIPTS_API_LAMBDA }}
+
+
+
+
+
+
       - name: Deploy React App to S3
         run: |
             aws s3 sync receipt-vault-frontend/dist/ s3://${{ env.FRONTEND_BUCKET }} \
@@ -122,6 +164,8 @@ jobs:
             aws cloudfront create-invalidation \
             --distribution-id ${{ env.CLOUDFRONT_DISTRIBUTION_ID }} \
             --paths "/*"
+
       
+
 
 
