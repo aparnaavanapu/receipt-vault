@@ -205,7 +205,7 @@ def lambda_handler(event, context):
                 Key=object_key
             )
 
-            raise Exception("Testing DLQ")
+            
 
             image_bytes = response["Body"].read()
 
